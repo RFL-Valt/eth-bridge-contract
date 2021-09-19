@@ -1,0 +1,17 @@
+node_modules
+
+#Hardhat files
+cache
+artifacts
+/abi
+# Plugins files
+/coverage
+/deployments
+/package-lock.json
+.coverage.json
+# Secret files
+.env
+.secret
+# Deploy data
+/build
+/data
