@@ -53,5 +53,6 @@ module.exports = {
   },
   etherscan: {
     apiKey: etherscanApiKey,
+    bsc: bscApiKey,
   },
 };

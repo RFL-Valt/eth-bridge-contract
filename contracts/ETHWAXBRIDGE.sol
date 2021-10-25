@@ -84,7 +84,7 @@ contract ETHWAXBRIDGE is Oracled, Verify {
         uint64 id;
         uint32 ts;
         uint64 fromAddr;
-        uint64 quantity;
+        uint256 quantity;
         uint64 symbolRaw;
         uint8 chainId;
         address toAddress;
@@ -140,10 +140,10 @@ contract ETHWAXBRIDGE is Oracled, Verify {
     {
         BridgeData memory td;
 
+        uint64 oracleQuantity = 0;
         uint64 id;
         uint32 ts;
         uint64 fromAddr;
-        uint64 quantity;
         uint64 symbolRaw;
         uint8 chainId;
         address toAddress;
@@ -152,16 +152,18 @@ contract ETHWAXBRIDGE is Oracled, Verify {
             id := mload(add(add(sigData, 0x8), 0))
             ts := mload(add(add(sigData, 0x4), 8))
             fromAddr := mload(add(add(sigData, 0x8), 12))
-            quantity := mload(add(add(sigData, 0x8), 20))
+            oracleQuantity := mload(add(add(sigData, 0x8), 20))
             symbolRaw := mload(add(add(sigData, 0x8), 28))
             chainId := mload(add(add(sigData, 0x1), 36))
             toAddress := mload(add(add(sigData, 0x14), 37))
         }
 
+        uint256 reversedQuantity = Endian.reverse64(oracleQuantity);
+
         td.id = Endian.reverse64(id);
         td.ts = Endian.reverse32(ts);
         td.fromAddr = Endian.reverse64(fromAddr);
-        td.quantity = Endian.reverse64(quantity);
+        td.quantity = uint256(reversedQuantity) * 1e10;
         td.symbolRaw = Endian.reverse64(symbolRaw);
         td.chainId = chainId;
         td.toAddress = toAddress;
