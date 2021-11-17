@@ -29,7 +29,7 @@ contract Oracled is Owned {
 
     modifier onlyOracle() {
         require(
-            oracles[msg.sender] == true,
+            oracles[msg.sender],
             "Account is not a registered oracle"
         );
 
@@ -43,7 +43,7 @@ contract Oracled is Owned {
     }
 
     function unregOracle(address _remOracle) public onlyOwner {
-        require(oracles[_remOracle] == true, "Oracle is not registered");
+        require(oracles[_remOracle], "Oracle is not registered");
 
         delete oracles[_remOracle];
     }
