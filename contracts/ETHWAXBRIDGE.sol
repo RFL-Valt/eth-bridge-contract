@@ -7,8 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "./libraries/Endian.sol";
 
-import "./interfaces/ERC20Interface.sol";
-
 import "./Verify.sol";
 import "./Owned.sol";
 
