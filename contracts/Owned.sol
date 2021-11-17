@@ -19,11 +19,11 @@ contract Owned {
         _;
     }
 
-    function transferOwnership(address _newOwner) public onlyOwner {
+    function transferOwnership(address _newOwner) external onlyOwner {
         newOwner = _newOwner;
     }
 
-    function acceptOwnership() public {
+    function acceptOwnership() external {
         require(msg.sender == newOwner);
         emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
