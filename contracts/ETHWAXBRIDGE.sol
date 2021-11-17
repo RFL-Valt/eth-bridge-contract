@@ -21,7 +21,7 @@ abstract contract ApproveAndCallFallBack {
         uint256 tokens,
         address token,
         bytes memory data
-    ) public virtual;
+    ) external virtual;
 }
 
 contract Oracled is Owned {
@@ -36,13 +36,13 @@ contract Oracled is Owned {
         _;
     }
 
-    function regOracle(address _newOracle) public onlyOwner {
+    function regOracle(address _newOracle) external onlyOwner {
         require(!oracles[_newOracle], "Oracle is already registered");
 
         oracles[_newOracle] = true;
     }
 
-    function unregOracle(address _remOracle) public onlyOwner {
+    function unregOracle(address _remOracle) external onlyOwner {
         require(oracles[_remOracle], "Oracle is not registered");
 
         delete oracles[_remOracle];
@@ -120,7 +120,7 @@ contract ETHWAXBRIDGE is Oracled, Verify {
         string memory to,
         uint256 tokens,
         uint256 chainid
-    ) public returns (bool success) {
+    ) external returns (bool success) {
         lock(msg.sender, tokens);
 
         emit Bridge(msg.sender, to, tokens, chainid);
@@ -180,8 +180,8 @@ contract ETHWAXBRIDGE is Oracled, Verify {
         return td;
     }
 
-    function claim(bytes memory sigData, bytes[] calldata signatures)
-        public
+    function claim(bytes calldata sigData, bytes[] calldata signatures)
+        external
         returns (address toAddress)
     {
         BridgeData memory td = verifySigData(sigData);
@@ -224,7 +224,7 @@ contract ETHWAXBRIDGE is Oracled, Verify {
     }
 
     function updateThreshold(uint8 newThreshold)
-        public
+        external
         onlyOwner
         returns (bool success)
     {
@@ -254,7 +254,7 @@ contract ETHWAXBRIDGE is Oracled, Verify {
     // Owner can transfer out any accidentally sent ERC20 tokens
     // ------------------------------------------------------------------------
     function transferAnyERC20Token(IERC20 tokenAddress, uint256 tokens)
-        public
+        external
         onlyOwner
     {
         // We never transfer our RFOX to another addresses
