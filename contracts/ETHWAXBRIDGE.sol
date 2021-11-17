@@ -77,6 +77,7 @@ contract ETHWAXBRIDGE is Oracled, Verify {
         uint256 chainId
     );
     event Claimed(uint64 id, address to, uint256 tokens);
+    event UpdateThreshold(address sender, uint8 oldThreshold, uint8 newThreshold);
 
     struct BridgeData {
         uint64 id;
@@ -230,7 +231,11 @@ contract ETHWAXBRIDGE is Oracled, Verify {
         if (newThreshold > 0) {
             require(newThreshold <= 10, "Threshold has maximum of 10");
 
+            uint8 oldThreshold = threshold;
+
             threshold = newThreshold;
+
+            emit UpdateThreshold(msg.sender, oldThreshold, threshold);
 
             return true;
         }
