@@ -45,14 +45,14 @@ module.exports = {
     },
   },
   networks: {
-    // kovan: {
-    //   url: `https://kovan.infura.io/v3/${infuraKey}`,
-    //   accounts: [privateKey],
-    // },
-    // mainnet: {
-    //   url: `https://mainnet.infura.io/v3/${infuraKey}`,
-    //   accounts: [privateKey],
-    // },
+    kovan: {
+      url: `https://kovan.infura.io/v3/${infuraKey}`,
+      accounts: [privateKey],
+    },
+    mainnet: {
+      url: `https://mainnet.infura.io/v3/${infuraKey}`,
+      accounts: [privateKey],
+    },
   },
   etherscan: {
     apiKey: etherscanApiKey,
