@@ -1,9 +1,12 @@
 require('dotenv').config();
 require('@nomiclabs/hardhat-waffle');
+require("@nomiclabs/hardhat-truffle5");
 require('@nomiclabs/hardhat-ethers');
 require('@nomiclabs/hardhat-etherscan');
+require("@nomiclabs/hardhat-web3");
 require('hardhat-abi-exporter');
 require('hardhat-deploy');
+require('solidity-coverage')
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -42,14 +45,14 @@ module.exports = {
     },
   },
   networks: {
-    kovan: {
-      url: `https://kovan.infura.io/v3/${infuraKey}`,
-      accounts: [privateKey],
-    },
-    mainnet: {
-      url: `https://mainnet.infura.io/v3/${infuraKey}`,
-      accounts: [privateKey],
-    },
+    // kovan: {
+    //   url: `https://kovan.infura.io/v3/${infuraKey}`,
+    //   accounts: [privateKey],
+    // },
+    // mainnet: {
+    //   url: `https://mainnet.infura.io/v3/${infuraKey}`,
+    //   accounts: [privateKey],
+    // },
   },
   etherscan: {
     apiKey: etherscanApiKey,

@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "./libraries/Endian.sol";
 
-import "./Verify.sol";
 import "./Owned.sol";
+import "./ECDSA.sol";
 
 // ----------------------------------------------------------------------------
 // Contract function to receive approval and execute function in one call
@@ -53,9 +53,10 @@ contract Oracled is Owned {
 // RFOX Bridge contract lock and release swap amount for each cross chain swap
 //
 // ----------------------------------------------------------------------------
-contract ETHWAXBRIDGE is Oracled, Verify {
+contract ETHWAXBRIDGE is Oracled {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
+    using ECDSA for bytes32;
 
     // RFOX Token address
     // Only using this address for bridging
@@ -198,7 +199,7 @@ contract ETHWAXBRIDGE is Oracled, Verify {
         uint8 numberSigs = 0;
 
         for (uint8 i = 0; i < signatures.length; i++) {
-            address potential = Verify.recoverSigner(message, signatures[i]);
+            address potential = _getSigner(message, signatures[i]);
 
             // Check that they are an oracle and they haven't signed twice
             if (oracles[potential] && !signed[td.id][potential]) {
@@ -283,5 +284,11 @@ contract ETHWAXBRIDGE is Oracled, Verify {
         rfox.safeTransfer(to, amount);
 
         emit Released(to, amount);
+    }
+
+    function _getSigner(bytes32 _data, bytes memory _signature) private pure returns (address) {
+        return keccak256(abi.encodePacked(_data))
+            .toEthSignedMessageHash()
+            .recover(_signature);
     }
 }

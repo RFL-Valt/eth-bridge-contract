@@ -2,6 +2,8 @@ const { expect } = require('chai');
 
 const { Serialize } = require('eosjs');
 
+const { expectRevert } = require("@openzeppelin/test-helpers");
+
 const fromHexString = (hexString) =>
   new Uint8Array(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
 
@@ -59,6 +61,14 @@ describe('ETHWAXBRIDGE', function () {
     const threshold = await bridge.threshold();
 
     expect(threshold).to.be.equal(3);
+  });
+
+  it('Should revert accept ownership did not call by alice', async function () {
+    await bridge.transferOwnership(alice.address);
+    await expectRevert.unspecified(bridge.connect(bob).acceptOwnership());
+    const contractOwner = await bridge.owner();
+
+    expect(contractOwner).to.be.equal(owner.address);
   });
 
   it('Should change the owner to alice', async function () {
