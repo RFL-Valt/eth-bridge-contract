@@ -287,8 +287,7 @@ contract ETHWAXBRIDGE is Oracled {
     }
 
     function _getSigner(bytes32 _data, bytes memory _signature) private pure returns (address) {
-        return keccak256(abi.encodePacked(_data))
-            .toEthSignedMessageHash()
+        return _data.toEthSignedMessageHash()
             .recover(_signature);
     }
 }
