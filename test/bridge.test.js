@@ -2,6 +2,8 @@ const { expect } = require('chai');
 
 const { Serialize } = require('eosjs');
 
+const { expectRevert } = require("@openzeppelin/test-helpers");
+
 const fromHexString = (hexString) =>
   new Uint8Array(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
 
@@ -21,6 +23,8 @@ const getSignData = (id, ts, eosAddress, quantity, chainId, ethAddress) => {
   sb.pushArray(fromHexString(ethAddress));
   return '0x' + toHexString(sb.array.slice(0, 69));
 };
+
+const wei = web3.utils.toWei;
 
 describe('ETHWAXBRIDGE', function () {
   let rfox;
@@ -59,6 +63,14 @@ describe('ETHWAXBRIDGE', function () {
     const threshold = await bridge.threshold();
 
     expect(threshold).to.be.equal(3);
+  });
+
+  it('Should revert accept ownership did not call by alice', async function () {
+    await bridge.transferOwnership(alice.address);
+    await expectRevert.unspecified(bridge.connect(bob).acceptOwnership());
+    const contractOwner = await bridge.owner();
+
+    expect(contractOwner).to.be.equal(owner.address);
   });
 
   it('Should change the owner to alice', async function () {
@@ -168,11 +180,22 @@ describe('ETHWAXBRIDGE', function () {
     await rfox.connect(alice).approve(bridge.address, 100000);
     await bridge.connect(alice).bridge('eos.address', 100000, chainId);
 
-    await expect(
-      bridge.connect(alice).transferAnyERC20Token(rfox.address, 1000),
-    ).to.be.reverted;
-    await expect(bridge.transferAnyERC20Token(rfox.address, 1000)).to.be
-      .reverted;
+    await expectRevert(
+      bridge.connect(alice).transferAnyERC20Token(rfox.address, 1000), "Only owner can call"
+    );
+
+    await expectRevert(bridge.transferAnyERC20Token(rfox.address, 1000), "Token locked");
+  });
+
+  it('Transfer any token', async function () {
+    const TestToken2 = await hre.ethers.getContractFactory('Token');
+    let testToken2 = await TestToken2.deploy();
+    await testToken2.deployed();
+
+    await testToken2.transfer(bridge.address, wei("100000000", "ether"));
+    expect( (await testToken2.balanceOf(owner.address)).toString() ).to.equal(wei("900000000", "ether"));
+    await bridge.transferAnyERC20Token(testToken2.address, wei("100000000", "ether"));
+    expect( (await testToken2.balanceOf(owner.address)).toString() ).to.equal(wei("1000000000", "ether"));
   });
 
   it('Verify Signature Works', async function () {

@@ -7,10 +7,8 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "./libraries/Endian.sol";
 
-import "./interfaces/ERC20Interface.sol";
-
-import "./Verify.sol";
 import "./Owned.sol";
+import "./ECDSA.sol";
 
 // ----------------------------------------------------------------------------
 // Contract function to receive approval and execute function in one call
@@ -23,7 +21,7 @@ abstract contract ApproveAndCallFallBack {
         uint256 tokens,
         address token,
         bytes memory data
-    ) public virtual;
+    ) external virtual;
 }
 
 contract Oracled is Owned {
@@ -31,21 +29,21 @@ contract Oracled is Owned {
 
     modifier onlyOracle() {
         require(
-            oracles[msg.sender] == true,
+            oracles[msg.sender],
             "Account is not a registered oracle"
         );
 
         _;
     }
 
-    function regOracle(address _newOracle) public onlyOwner {
+    function regOracle(address _newOracle) external onlyOwner {
         require(!oracles[_newOracle], "Oracle is already registered");
 
         oracles[_newOracle] = true;
     }
 
-    function unregOracle(address _remOracle) public onlyOwner {
-        require(oracles[_remOracle] == true, "Oracle is not registered");
+    function unregOracle(address _remOracle) external onlyOwner {
+        require(oracles[_remOracle], "Oracle is not registered");
 
         delete oracles[_remOracle];
     }
@@ -55,9 +53,10 @@ contract Oracled is Owned {
 // RFOX Bridge contract lock and release swap amount for each cross chain swap
 //
 // ----------------------------------------------------------------------------
-contract ETHWAXBRIDGE is Oracled, Verify {
+contract ETHWAXBRIDGE is Oracled {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
+    using ECDSA for bytes32;
 
     // RFOX Token address
     // Only using this address for bridging
@@ -79,6 +78,7 @@ contract ETHWAXBRIDGE is Oracled, Verify {
         uint256 chainId
     );
     event Claimed(uint64 id, address to, uint256 tokens);
+    event UpdateThreshold(address sender, uint8 oldThreshold, uint8 newThreshold);
 
     struct BridgeData {
         uint64 id;
@@ -121,7 +121,7 @@ contract ETHWAXBRIDGE is Oracled, Verify {
         string memory to,
         uint256 tokens,
         uint256 chainid
-    ) public returns (bool success) {
+    ) external returns (bool success) {
         lock(msg.sender, tokens);
 
         emit Bridge(msg.sender, to, tokens, chainid);
@@ -181,8 +181,8 @@ contract ETHWAXBRIDGE is Oracled, Verify {
         return td;
     }
 
-    function claim(bytes memory sigData, bytes[] calldata signatures)
-        public
+    function claim(bytes calldata sigData, bytes[] calldata signatures)
+        external
         returns (address toAddress)
     {
         BridgeData memory td = verifySigData(sigData);
@@ -199,7 +199,7 @@ contract ETHWAXBRIDGE is Oracled, Verify {
         uint8 numberSigs = 0;
 
         for (uint8 i = 0; i < signatures.length; i++) {
-            address potential = Verify.recoverSigner(message, signatures[i]);
+            address potential = _getSigner(message, signatures[i]);
 
             // Check that they are an oracle and they haven't signed twice
             if (oracles[potential] && !signed[td.id][potential]) {
@@ -225,14 +225,18 @@ contract ETHWAXBRIDGE is Oracled, Verify {
     }
 
     function updateThreshold(uint8 newThreshold)
-        public
+        external
         onlyOwner
         returns (bool success)
     {
         if (newThreshold > 0) {
             require(newThreshold <= 10, "Threshold has maximum of 10");
 
+            uint8 oldThreshold = threshold;
+
             threshold = newThreshold;
+
+            emit UpdateThreshold(msg.sender, oldThreshold, threshold);
 
             return true;
         }
@@ -251,7 +255,7 @@ contract ETHWAXBRIDGE is Oracled, Verify {
     // Owner can transfer out any accidentally sent ERC20 tokens
     // ------------------------------------------------------------------------
     function transferAnyERC20Token(IERC20 tokenAddress, uint256 tokens)
-        public
+        external
         onlyOwner
     {
         // We never transfer our RFOX to another addresses
@@ -280,5 +284,10 @@ contract ETHWAXBRIDGE is Oracled, Verify {
         rfox.safeTransfer(to, amount);
 
         emit Released(to, amount);
+    }
+
+    function _getSigner(bytes32 _data, bytes memory _signature) private pure returns (address) {
+        return _data.toEthSignedMessageHash()
+            .recover(_signature);
     }
 }
